@@ -1,5 +1,6 @@
 {
-  "sports": ["nfl"],
+  "sports": ["mlb"],
+  "time_zones": ["America/New_York", "Europe/London"]
   "scroll_speed": 2,
   "font_size": 100,
   "refresh_interval": 300

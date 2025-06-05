@@ -2,7 +2,8 @@ import pygame
 import requests
 import json
 import time
-import os
+from datetime import datetime
+import pytz
 
 CONFIG_PATH = "config.json"
 
@@ -28,11 +29,20 @@ def fetch_scores(sports):
             all_scores.append(f"Error loading {sport.upper()} scores")
     return all_scores or ["No games available"]
 
+def format_clocks(time_zones):
+    now = datetime.utcnow()
+    clocks = []
+    for zone in time_zones:
+        tz = pytz.timezone(zone)
+        local_time = now.astimezone(tz).strftime('%H:%M:%S')
+        label = zone.split('/')[-1].replace('_', ' ')
+        clocks.append(f"{label}: {local_time}")
+    return "   |   ".join(clocks)
+
 def run_ticker():
     pygame.init()
     screen = pygame.display.set_mode((1920, 360))
     pygame.display.set_caption("Sports Ticker")
-
     clock = pygame.time.Clock()
     bg_color = (0, 0, 0)
     text_color = (255, 255, 255)
@@ -40,20 +50,30 @@ def run_ticker():
     while True:
         config = load_config()
         font = pygame.font.SysFont("Arial", config["font_size"])
-        messages = fetch_scores(config["sports"])
-        combined = "     ||     ".join(messages)
-        text_surface = font.render(combined, True, text_color)
-        text_width = text_surface.get_width()
+        small_font = pygame.font.SysFont("Arial", 40)
+
+        scores = fetch_scores(config["sports"])
+        combined_scores = "     ||     ".join(scores)
+        score_surface = font.render(combined_scores, True, text_color)
+        score_width = score_surface.get_width()
 
         x = 1920
         start_time = time.time()
 
         while time.time() - start_time < config["refresh_interval"]:
             screen.fill(bg_color)
-            screen.blit(text_surface, (x, 100))
+
+            # Draw clocks on top
+            clock_text = format_clocks(config.get("time_zones", []))
+            clock_surface = small_font.render(clock_text, True, text_color)
+            screen.blit(clock_surface, (20, 20))
+
+            # Draw scrolling ticker
+            screen.blit(score_surface, (x, 160))
             x -= config["scroll_speed"]
-            if x < -text_width:
+            if x < -score_width:
                 x = 1920
+
             pygame.display.update()
             clock.tick(60)
 

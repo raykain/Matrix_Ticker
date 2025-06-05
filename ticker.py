@@ -11,10 +11,12 @@ def load_config():
     with open(CONFIG_PATH) as f:
         return json.load(f)
 
-def fetch_scores(sports):
+def fetch_scores(sport_leagues):
     all_scores = []
-    for sport in sports:
-        url = f"https://site.api.espn.com/apis/site/v2/sports/football/{sport}/scoreboard"
+    for entry in sport_leagues:
+        sport = entry["sport"]
+        league = entry["league"]
+        url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard"
         try:
             response = requests.get(url)
             games = response.json().get("events", [])
@@ -24,9 +26,9 @@ def fetch_scores(sports):
                 score1 = comps[0].get('score', '0')
                 team2 = comps[1]['team']['shortDisplayName']
                 score2 = comps[1].get('score', '0')
-                all_scores.append(f"{team1} {score1} - {team2} {score2}")
+                all_scores.append(f"{league.upper()}: {team1} {score1} - {team2} {score2}")
         except Exception as e:
-            all_scores.append(f"Error loading {sport.upper()} scores")
+            all_scores.append(f"{league.upper()}: Error loading scores")
     return all_scores or ["No games available"]
 
 def format_clocks(time_zones):
@@ -63,12 +65,10 @@ def run_ticker():
         while time.time() - start_time < config["refresh_interval"]:
             screen.fill(bg_color)
 
-            # Draw clocks on top
             clock_text = format_clocks(config.get("time_zones", []))
             clock_surface = small_font.render(clock_text, True, text_color)
             screen.blit(clock_surface, (20, 20))
 
-            # Draw scrolling ticker
             screen.blit(score_surface, (x, 160))
             x -= config["scroll_speed"]
             if x < -score_width:

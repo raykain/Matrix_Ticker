@@ -1,7 +1,10 @@
 {
-  "sports": ["mlb"],
-  "time_zones": ["America/New_York", "Europe/London"]
+  "sports": [
+    { "sport": "football", "league": "nfl" },
+    { "sport": "basketball", "league": "nba" }
+  ],
   "scroll_speed": 2,
-  "font_size": 100,
-  "refresh_interval": 300
+  "font_size": 80,
+  "refresh_interval": 300,
+  "time_zones": ["America/New_York", "Europe/London", "Asia/Tokyo"]
 }

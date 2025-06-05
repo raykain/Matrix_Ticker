@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sports Ticker Admin</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 20px; }
+    label, input, select { display: block; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>Sports Ticker Configuration</h1>
+  <form method="POST">
+    <label>Sports to Display:</label>
+    <select name="sports" multiple size="5">
+      <option value="nfl" {% if "nfl" in config.sports %}selected{% endif %}>NFL</option>
+      <option value="nba" {% if "nba" in config.sports %}selected{% endif %}>NBA</option>
+      <option value="mlb" {% if "mlb" in config.sports %}selected{% endif %}>MLB</option>
+      <option value="nhl" {% if "nhl" in config.sports %}selected{% endif %}>NHL</option>
+    </select>
+
+    <label>Scroll Speed:</label>
+    <input type="number" name="scroll_speed" value="{{ config.scroll_speed }}">
+
+    <label>Font Size:</label>
+    <input type="number" name="font_size" value="{{ config.font_size }}">
+
+    <label>Refresh Interval (sec):</label>
+    <input type="number" name="refresh_interval" value="{{ config.refresh_interval }}">
+
+    <button type="submit">Save Settings</button>
+  </form>
+</body>
+</html>

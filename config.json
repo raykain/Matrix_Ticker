@@ -1,0 +1,6 @@
+{
+  "sports": ["nfl"],
+  "scroll_speed": 2,
+  "font_size": 100,
+  "refresh_interval": 300
+}

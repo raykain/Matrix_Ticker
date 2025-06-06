@@ -1,5 +1,5 @@
 import os
-os.environ["SDL_VIDEODRIVER"] = "x11"  # Needed for most Raspberry Pi setups with GUI
+os.environ["SDL_VIDEODRIVER"] = "x11"  # For Raspberry Pi GUI mode
 
 import pygame
 import requests
@@ -19,17 +19,32 @@ def load_config():
         return json.load(f)
 
 def download_logo(url, team_id):
+    if not url:
+        return None
+
     path = os.path.join(LOGO_DIR, f"{team_id}.png")
-    if not os.path.exists(path):
-        try:
-            response = requests.get(url, timeout=5)
+    if os.path.exists(path):
+        return path
+
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200 and 'image' in response.headers.get('Content-Type', ''):
             img = Image.open(BytesIO(response.content)).convert("RGBA")
             img = img.resize((80, 80))
             img.save(path)
-        except Exception as e:
-            print(f"Logo download failed for {team_id}: {e}")
-            return None
-    return path
+            return path
+        else:
+            print(f"Invalid image for team {team_id}")
+    except Exception as e:
+        print(f"Error downloading logo for {team_id}: {e}")
+    return None
+
+def extract_logo_url(team):
+    if 'logo' in team:
+        return team['logo']
+    elif 'logos' in team and isinstance(team['logos'], list) and team['logos']:
+        return team['logos'][0].get('href')
+    return None
 
 def fetch_scores(sport_leagues):
     all_scores = []
@@ -45,14 +60,22 @@ def fetch_scores(sport_leagues):
                 t1 = comps[0]
                 t2 = comps[1]
 
+                team1_logo_url = extract_logo_url(t1['team'])
+                team2_logo_url = extract_logo_url(t2['team'])
+                team1_id = t1['team']['id']
+                team2_id = t2['team']['id']
+
+                team1_logo_path = download_logo(team1_logo_url, team1_id)
+                team2_logo_path = download_logo(team2_logo_url, team2_id)
+
                 item = {
                     "league": league.upper(),
                     "team1": t1['team']['shortDisplayName'],
                     "team2": t2['team']['shortDisplayName'],
                     "score1": t1.get('score', '0'),
                     "score2": t2.get('score', '0'),
-                    "logo1": download_logo(t1['team']['logo'][0]['href'], t1['team']['id']),
-                    "logo2": download_logo(t2['team']['logo'][0]['href'], t2['team']['id'])
+                    "logo1": team1_logo_path,
+                    "logo2": team2_logo_path
                 }
                 all_scores.append(item)
         except Exception as e:
@@ -81,21 +104,29 @@ def format_clocks(time_zones):
             continue
     return "   |   ".join(clocks)
 
+def safe_load_image(path):
+    try:
+        return pygame.image.load(path)
+    except Exception as e:
+        print(f"Failed to load image {path}: {e}")
+        return None
+
 def render_score_items(scores, font):
     surfaces = []
     for item in scores:
         text = f"{item['team1']} {item['score1']} - {item['score2']} {item['team2']}"
         text_surface = font.render(text, True, (255, 255, 255))
-        
+
         combined_width = 80 + text_surface.get_width() + 80 + 60
         surface = pygame.Surface((combined_width, 80), pygame.SRCALPHA)
 
-        if item['logo1']:
-            logo1 = pygame.image.load(item['logo1'])
+        logo1 = safe_load_image(item['logo1']) if item['logo1'] else None
+        logo2 = safe_load_image(item['logo2']) if item['logo2'] else None
+
+        if logo1:
             surface.blit(logo1, (0, 0))
         surface.blit(text_surface, (90, 20))
-        if item['logo2']:
-            logo2 = pygame.image.load(item['logo2'])
+        if logo2:
             surface.blit(logo2, (90 + text_surface.get_width() + 10, 0))
 
         surfaces.append(surface)

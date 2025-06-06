@@ -43,7 +43,7 @@ def download_logo(url, team_id):
 
             # === Create 90x90 image with thin border ===
             size_90 = (90, 90)
-            bg_90 = Image.new("RGBA", size_90, (255, 255, 255, 255))
+            bg_90 = Image.new("RGBA", size_90, (255, 255, 255, 255))  # Solid white background
             draw_90 = ImageDraw.Draw(bg_90)
             # Thin white circle border - radius 44, border thickness 2 px
             draw_90.ellipse((1, 1, size_90[0]-2, size_90[1]-2), fill=(255, 255, 255, 255))
@@ -51,20 +51,20 @@ def download_logo(url, team_id):
             bg_90.paste(logo, offset_90, logo)
             bg_90.save(path_90)
 
-            # === Create 100x100 image with thicker border ===
+            # === Create 100x100 image with thick white circular border on white background ===
             size_100 = (100, 100)
-            bg_100 = Image.new("RGBA", size_100, (0, 0, 0, 0))
+            bg_100 = Image.new("RGBA", size_100, (255, 255, 255, 255))  # Full white background
+
+            # Draw white circle (border effect)
             draw_100 = ImageDraw.Draw(bg_100)
-            # Thick white circle border - radius 48, border thickness 6 px
-            # Draw white filled circle
-            draw_100.ellipse((0, 0, size_100[0], size_100[1]), fill=(255, 255, 255, 255))
-            # Draw smaller black circle inside to create border effect
-            inner_margin = 6
-            draw_100.ellipse((inner_margin, inner_margin, size_100[0]-inner_margin, size_100[1]-inner_margin), fill=(0, 0, 0, 0))
-            # Paste the logo centered inside the transparent circle
+            draw_100.ellipse((0, 0, size_100[0], size_100[1]), fill=(255, 255, 255, 255))  # Ensure full circle is white
+
+            # Paste logo (already circular with alpha) in the center
             offset_100 = ((size_100[0] - logo.size[0]) // 2, (size_100[1] - logo.size[1]) // 2)
-            bg_100.paste(logo, offset_100, logo)
+            bg_100.paste(logo, offset_100, logo)  # Use alpha mask from logo
+
             bg_100.save(path_100)
+
 
             return path_90, path_100
 

@@ -53,7 +53,7 @@ def download_logo(url, team_id):
 
             # === Create 100x100 image with thicker border ===
             size_100 = (100, 100)
-            bg_100 = Image.new("RGBA", size_100, (255, 255, 255, 255))
+            bg_100 = Image.new("RGBA", size_100, (0, 0, 0, 0))
             draw_100 = ImageDraw.Draw(bg_100)
             # Thick white circle border - radius 48, border thickness 6 px
             # Draw white filled circle

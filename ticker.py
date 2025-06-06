@@ -141,10 +141,13 @@ def format_clocks(time_zones):
 
 def safe_load_image(path):
     try:
-        return pygame.image.load(path).convert_alpha()
+        if isinstance(path, str) and os.path.exists(path):
+            return pygame.image.load(path).convert_alpha()
+        else:
+            print(f"Invalid image path: {path}")
     except Exception as e:
         print(f"Failed to load image {path}: {e}")
-        return None
+    return None
 
 def render_score_items(scores, font):
     surfaces = []
@@ -152,8 +155,8 @@ def render_score_items(scores, font):
         score_text = f"{item['score1']} - {item['score2']}"
         score_surface = font.render(score_text, True, (255, 255, 255))
 
-        logo1 = safe_load_image(item['logo1']) if item['logo1'] else None
-        logo2 = safe_load_image(item['logo2']) if item['logo2'] else None
+        logo1 = safe_load_image(item['logo1'][1]) if item['logo1'] else None
+        logo2 = safe_load_image(item['logo2'][1]) if item['logo2'] else None
 
         # Use placeholders if logos are missing
         logo_size = 80

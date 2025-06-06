@@ -7,7 +7,7 @@ import json
 import time
 from datetime import datetime
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageDraw
 import pytz
 
 CONFIG_PATH = "config.json"
@@ -29,23 +29,22 @@ def download_logo(url, team_id):
     try:
         response = requests.get(url, timeout=5)
         if response.status_code == 200 and 'image' in response.headers.get('Content-Type', ''):
-            # Load image and convert to RGBA
             img = Image.open(BytesIO(response.content)).convert("RGBA")
             img = img.resize((80, 80), Image.LANCZOS)
 
-            # Create circular mask
-            mask = Image.new("L", (80, 80), 0)
-            draw = Image.new("L", (80, 80), 0)
-            Image.Image.paste(mask, Image.new("L", (80, 80), 255), mask=Image.new("L", (80, 80), 255).point(lambda i: 255 if i < 255 else 0))
-            for x in range(80):
-                for y in range(80):
-                    dx, dy = x - 40, y - 40
-                    if dx**2 + dy**2 > 40**2:
-                        mask.putpixel((x, y), 0)
+            # Create same size mask with transparent background
+            mask = Image.new("L", img.size, 0)
+            draw = ImageDraw.Draw(mask)
 
+            # Draw a white filled circle on mask
+            draw.ellipse((0, 0, img.size[0], img.size[1]), fill=255)
+
+            # Apply mask as alpha channel
             img.putalpha(mask)
+
             img.save(path)
             return path
+
     except Exception as e:
         print(f"Error downloading logo for {team_id}: {e}")
     return None

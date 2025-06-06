@@ -29,15 +29,27 @@ def download_logo(url, team_id):
     try:
         response = requests.get(url, timeout=5)
         if response.status_code == 200 and 'image' in response.headers.get('Content-Type', ''):
+            # Load image and convert to RGBA
             img = Image.open(BytesIO(response.content)).convert("RGBA")
-            img = img.resize((80, 80))
+            img = img.resize((80, 80), Image.LANCZOS)
+
+            # Create circular mask
+            mask = Image.new("L", (80, 80), 0)
+            draw = Image.new("L", (80, 80), 0)
+            Image.Image.paste(mask, Image.new("L", (80, 80), 255), mask=Image.new("L", (80, 80), 255).point(lambda i: 255 if i < 255 else 0))
+            for x in range(80):
+                for y in range(80):
+                    dx, dy = x - 40, y - 40
+                    if dx**2 + dy**2 > 40**2:
+                        mask.putpixel((x, y), 0)
+
+            img.putalpha(mask)
             img.save(path)
             return path
-        else:
-            print(f"Invalid image for team {team_id}")
     except Exception as e:
         print(f"Error downloading logo for {team_id}: {e}")
     return None
+
 
 def extract_logo_url(team):
     if 'logo' in team:
@@ -106,7 +118,7 @@ def format_clocks(time_zones):
 
 def safe_load_image(path):
     try:
-        return pygame.image.load(path)
+        return pygame.image.load(path).convert_alpha()
     except Exception as e:
         print(f"Failed to load image {path}: {e}")
         return None
@@ -114,20 +126,26 @@ def safe_load_image(path):
 def render_score_items(scores, font):
     surfaces = []
     for item in scores:
-        text = f"{item['team1']} {item['score1']} - {item['score2']} {item['team2']}"
-        text_surface = font.render(text, True, (255, 255, 255))
-
-        combined_width = 80 + text_surface.get_width() + 80 + 60
-        surface = pygame.Surface((combined_width, 80), pygame.SRCALPHA)
+        score_text = f"{item['score1']} - {item['score2']}"
+        score_surface = font.render(score_text, True, (255, 255, 255))
 
         logo1 = safe_load_image(item['logo1']) if item['logo1'] else None
         logo2 = safe_load_image(item['logo2']) if item['logo2'] else None
 
-        if logo1:
-            surface.blit(logo1, (0, 0))
-        surface.blit(text_surface, (90, 20))
-        if logo2:
-            surface.blit(logo2, (90 + text_surface.get_width() + 10, 0))
+        # Use placeholders if logos are missing
+        logo_size = 80
+        placeholder = pygame.Surface((logo_size, logo_size), pygame.SRCALPHA)
+        placeholder.fill((50, 50, 50))
+
+        logo1 = pygame.transform.scale(logo1, (logo_size, logo_size)) if logo1 else placeholder
+        logo2 = pygame.transform.scale(logo2, (logo_size, logo_size)) if logo2 else placeholder
+
+        width = logo_size + 40 + score_surface.get_width() + 40 + logo_size
+        surface = pygame.Surface((width, logo_size), pygame.SRCALPHA)
+
+        surface.blit(logo1, (0, 0))
+        surface.blit(score_surface, (logo_size + 40, (logo_size - score_surface.get_height()) // 2))
+        surface.blit(logo2, (logo_size + 40 + score_surface.get_width() + 40, 0))
 
         surfaces.append(surface)
     return surfaces

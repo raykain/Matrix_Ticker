@@ -41,28 +41,32 @@ def download_logo(url, team_id):
             draw.ellipse((0, 0, logo.size[0], logo.size[1]), fill=255)
             logo.putalpha(mask)
 
-            # === Create 90x90 image with thin border ===
+            # === Create 90x90 image with white background and thin border ===
             size_90 = (90, 90)
             bg_90 = Image.new("RGBA", size_90, (255, 255, 255, 255))  # Solid white background
             draw_90 = ImageDraw.Draw(bg_90)
-            # Thin white circle border - radius 44, border thickness 2 px
-            draw_90.ellipse((1, 1, size_90[0]-2, size_90[1]-2), fill=(255, 255, 255, 255))
-            offset_90 = ((size_90[0] - logo.size[0]) // 2, (size_90[1] - logo.size[1]) // 2)
-            bg_90.paste(logo, offset_90, logo)
+            draw_90.ellipse((0, 0, size_90[0], size_90[1]), outline=(200, 200, 200), width=2)  # Optional border
+
+            offset = ((size_90[0] - logo.size[0]) // 2, (size_90[1] - logo.size[1]) // 2)
+            bg_90.paste(logo, offset, logo)  # Use alpha mask
+
+            bg_90 = bg_90.convert("RGB")
             bg_90.save(path_90)
 
-            # === Create 100x100 image with thick white circular border on white background ===
+
+            # === Create 100x100 image with circular white background ===
             size_100 = (100, 100)
-            bg_100 = Image.new("RGBA", size_100, (255, 255, 255, 255))  # Full white background
+            bg_100 = Image.new("RGBA", size_100, (255, 255, 255, 255))  # Solid white background
 
-            # Draw white circle (border effect)
+            # Optional: draw a white circle (redundant here since bg is white)
             draw_100 = ImageDraw.Draw(bg_100)
-            draw_100.ellipse((0, 0, size_100[0], size_100[1]), fill=(255, 255, 255, 255))  # Ensure full circle is white
+            draw_100.ellipse((0, 0, size_100[0], size_100[1]), fill=(255, 255, 255, 255))
 
-            # Paste logo (already circular with alpha) in the center
-            offset_100 = ((size_100[0] - logo.size[0]) // 2, (size_100[1] - logo.size[1]) // 2)
-            bg_100.paste(logo, offset_100, logo)  # Use alpha mask from logo
+            # Center the logo (already circular masked)
+            offset = ((size_100[0] - logo.size[0]) // 2, (size_100[1] - logo.size[1]) // 2)
+            bg_100.paste(logo, offset, logo)  # Use logo's alpha as mask
 
+            bg_100 = bg_100.convert("RGB")  # Remove alpha completely (ensures no weird blending in Pygame)
             bg_100.save(path_100)
 
 

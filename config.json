@@ -1,6 +1,6 @@
 {
   "sports": [
-    { "sport": "football", "league": "nfl" },
+    { "sport": "baseball", "league": "mlb" },
     { "sport": "basketball", "league": "nba" }
   ],
   "scroll_speed": 2,

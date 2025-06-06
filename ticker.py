@@ -22,32 +22,56 @@ def download_logo(url, team_id):
     if not url:
         return None
 
-    path = os.path.join(LOGO_DIR, f"{team_id}.png")
-    if os.path.exists(path):
-        return path
+    # Paths for both sizes
+    path_90 = os.path.join(LOGO_DIR, f"{team_id}_90.png")
+    path_100 = os.path.join(LOGO_DIR, f"{team_id}_100.png")
+    if os.path.exists(path_90) and os.path.exists(path_100):
+        return path_90, path_100
 
     try:
         response = requests.get(url, timeout=5)
         if response.status_code == 200 and 'image' in response.headers.get('Content-Type', ''):
-            img = Image.open(BytesIO(response.content)).convert("RGBA")
-            img = img.resize((80, 80), Image.LANCZOS)
+            # Open and resize original logo to 80x80 for best quality inside border
+            logo = Image.open(BytesIO(response.content)).convert("RGBA")
+            logo = logo.resize((80, 80), Image.LANCZOS)
 
-            # Create same size mask with transparent background
-            mask = Image.new("L", img.size, 0)
+            # Create circular mask for logo
+            mask = Image.new("L", logo.size, 0)
             draw = ImageDraw.Draw(mask)
+            draw.ellipse((0, 0, logo.size[0], logo.size[1]), fill=255)
+            logo.putalpha(mask)
 
-            # Draw a white filled circle on mask
-            draw.ellipse((0, 0, img.size[0], img.size[1]), fill=255)
+            # === Create 90x90 image with thin border ===
+            size_90 = (90, 90)
+            bg_90 = Image.new("RGBA", size_90, (0, 0, 0, 0))
+            draw_90 = ImageDraw.Draw(bg_90)
+            # Thin white circle border - radius 44, border thickness 2 px
+            draw_90.ellipse((1, 1, size_90[0]-2, size_90[1]-2), fill=(255, 255, 255, 255))
+            offset_90 = ((size_90[0] - logo.size[0]) // 2, (size_90[1] - logo.size[1]) // 2)
+            bg_90.paste(logo, offset_90, logo)
+            bg_90.save(path_90)
 
-            # Apply mask as alpha channel
-            img.putalpha(mask)
+            # === Create 100x100 image with thicker border ===
+            size_100 = (100, 100)
+            bg_100 = Image.new("RGBA", size_100, (0, 0, 0, 0))
+            draw_100 = ImageDraw.Draw(bg_100)
+            # Thick white circle border - radius 48, border thickness 6 px
+            # Draw white filled circle
+            draw_100.ellipse((0, 0, size_100[0], size_100[1]), fill=(255, 255, 255, 255))
+            # Draw smaller black circle inside to create border effect
+            inner_margin = 6
+            draw_100.ellipse((inner_margin, inner_margin, size_100[0]-inner_margin, size_100[1]-inner_margin), fill=(0, 0, 0, 0))
+            # Paste the logo centered inside the transparent circle
+            offset_100 = ((size_100[0] - logo.size[0]) // 2, (size_100[1] - logo.size[1]) // 2)
+            bg_100.paste(logo, offset_100, logo)
+            bg_100.save(path_100)
 
-            img.save(path)
-            return path
+            return path_90, path_100
 
     except Exception as e:
         print(f"Error downloading logo for {team_id}: {e}")
-    return None
+
+    return None, None
 
 
 def extract_logo_url(team):

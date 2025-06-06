@@ -51,8 +51,8 @@ def fetch_scores(sport_leagues):
                     "team2": t2['team']['shortDisplayName'],
                     "score1": t1.get('score', '0'),
                     "score2": t2.get('score', '0'),
-                    "logo1": download_logo(t1['team']['logos'][0]['href'], t1['team']['id']),
-                    "logo2": download_logo(t2['team']['logos'][0]['href'], t2['team']['id'])
+                    "logo1": download_logo(t1['team']['logo'][0]['href'], t1['team']['id']),
+                    "logo2": download_logo(t2['team']['logo'][0]['href'], t2['team']['id'])
                 }
                 all_scores.append(item)
         except Exception as e:
